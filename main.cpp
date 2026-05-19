@@ -12,7 +12,7 @@ static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
 static SDL_Texture *render_target = NULL;
 
-static float pressure = 0.0f;
+float pressure = 0.0f;
 static float previous_touch_x = -1.0f;
 static float previous_touch_y = -1.0f;
 
@@ -67,9 +67,6 @@ int main(int argc, char *argv[])
         SDL_Quit();
         return 1;
     }
-
-    // Go fullscreen
-    //SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
 
     SDL_GetWindowSize(window, &w, &h);
     recreate_render_target(w, h);
@@ -127,18 +124,31 @@ int main(int argc, char *argv[])
 
             if (event.type == SDL_MOUSEBUTTONUP) {
                 pressure = 0.0f;
+                drawn_lines.push_back({
+                    previous_touch_x,
+                    previous_touch_y,
+                    previous_touch_x,
+                    previous_touch_y,
+                    0.0f
+                });
                 previous_touch_x = previous_touch_y = -1.0f;
             }
 
             if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_p) {
                 std::cout << "Recorded line segments:\n";
                 for (const auto &line : drawn_lines) {
-                    std::cout << "Line: (" << line.x1 << ", " << line.y1
-                              << ") -> (" << line.x2 << ", " << line.y2
-                              << ") pressure=" << line.pressure << "\n";
+                    int delta_x = line.x2 - line.x1;
+                    int delta_y = line.y2 - line.y1;
+                    std::cout << delta_x << ", " << delta_y << ", " << line.pressure << "\n";
                 }
-                SDL_RenderPresent(renderer);
-                
+            }
+
+            if (event.key.keysym.sym == SDLK_LCTRL) {
+                drawn_lines.clear();
+                SDL_SetRenderTarget(renderer, render_target);
+                SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255);
+                SDL_RenderClear(renderer);
+                SDL_SetRenderTarget(renderer, NULL);
             }
         }
 
